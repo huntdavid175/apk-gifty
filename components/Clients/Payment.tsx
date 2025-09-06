@@ -8,6 +8,54 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { sendAdminEmail } from "@/utils/emailjs";
 import { order } from "@/redux/features/orderSlice";
 import MobilePaymentForm from "../Form/MobilePaymentForm";
+import { toast } from "react-toastify";
+import MiniLoader from "../UI/Loader/MiniLoader";
+import CheckedSvg from "../UI/SvgIcons/CheckedSvg";
+import NextSvg from "../UI/SvgIcons/NextSvg";
+import GradientActionButton from "../UI/GradientActionButton";
+
+const makeMomoPayment = async (
+  id: number,
+  loadingFunc: any,
+  momoPaymentMethod: string,
+  momoPhoneNumber: string
+) => {
+  let config = {
+    method: "POST",
+    maxBodyLength: Infinity,
+    url: `/api/momo-payment/`,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    data: {
+      id,
+      paymentMethod: momoPaymentMethod,
+      phoneNumber: momoPhoneNumber,
+    },
+  };
+  try {
+    // loadingFunc(true);
+    const response = await axios(config);
+    if (response.status == 200) {
+      toast.success("Payment initiated successfully");
+      console.log(response.data);
+      return response.data;
+    }
+
+    // console.log(response.data);
+    // if (response.data.status) {
+    //   setPaystackLink(response.data.data.authorization_url);
+    //   // window.open(`${response.data.data.authorization_url}`, "_blank");
+    //   setOpenMomoDialog(true);
+    // }
+  } catch (error: any) {
+    toast.error("Payment issue, please try again later");
+    console.log(error);
+  } finally {
+    loadingFunc(false);
+  }
+};
 
 const makeUSDTPayment = async (id: number, loadingFunc: any) => {
   let config = {
@@ -31,6 +79,25 @@ const makeUSDTPayment = async (id: number, loadingFunc: any) => {
   } catch (error: any) {
     console.log(error);
   } finally {
+    loadingFunc(false);
+  }
+};
+
+const sendPayment = async (
+  id: number,
+  loadingFunc: any,
+  type: string,
+  momoPaymentMethod: string,
+  momoPhoneNumber: string
+) => {
+  if (type.toLowerCase() == "momo") {
+    const res = await makeMomoPayment(
+      id,
+      loadingFunc,
+      momoPaymentMethod,
+      momoPhoneNumber
+    );
+    return res;
   }
 };
 
@@ -53,6 +120,11 @@ const Payment = ({
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [usdtPaymentDetails, setUsdtPaymentDetails] = useState<any>(null);
   const [showUsdtDialog, setShowUsdtDialog] = useState(false);
+  const [momoPaymentMethod, setMomoPaymentMethod] =
+    useState<string>("MTN_MONEY");
+  const [momoPhoneNumber, setMomoPhoneNumber] = useState<string>("");
+  const [isMomoLoading, setIsMomoLoading] = useState<boolean>(false);
+  const [momoInitiated, setMomoInitiated] = useState<boolean>(false);
 
   let methodImage;
   let dialog;
@@ -73,6 +145,14 @@ const Payment = ({
     setOpen(true);
   };
 
+  const handleMomoPaymentFormInput = (e: any) => {
+    if (e.target.name === "paymentMethod") {
+      setMomoPaymentMethod(e.target.value);
+    } else if (e.target.name === "phoneNumber") {
+      setMomoPhoneNumber(e.target.value);
+    }
+  };
+
   const handleNotifySeller = async () => {
     try {
       if (method.channel.toLowerCase() === "usdt") {
@@ -91,13 +171,44 @@ const Payment = ({
           return;
         }
       }
-      notifySeller();
-      setOpen(false);
-      sendAdminEmail(orderData);
+      if (method.channel.toLowerCase() === "momo") {
+        console.log(momoPaymentMethod, momoPhoneNumber);
+      }
+      // notifySeller();
+      // setOpen(false);
+      // sendAdminEmail(orderData);
     } catch (error) {
       console.log(error);
     }
   };
+
+  // Extracted action handler for MoMo button
+  const handleMomoAction = async () => {
+    if (momoInitiated) {
+      await handleNotifySeller();
+      return;
+    }
+    try {
+      setIsMomoLoading(true);
+      const res = await sendPayment(
+        id,
+        loadingFunc,
+        "momo",
+        momoPaymentMethod,
+        momoPhoneNumber
+      );
+      if (res) {
+        setIsMomoLoading(false);
+        setMomoInitiated(true);
+      }
+    } catch (e) {
+      // toast is triggered in makeMomoPayment
+    } finally {
+      setIsMomoLoading(false);
+    }
+  };
+
+  const actionLabel = momoInitiated ? "Confirm Payment" : "Make Payment";
 
   useEffect(() => {
     if (paymentInitiated && method.channel.toLowerCase() === "usdt") {
@@ -182,19 +293,44 @@ const Payment = ({
         )}
 
         <div>
-          <MobilePaymentForm
-          // paymentMethod={method.payment_method}
-          // phoneNumber={method.phone_number}
-          />
+          {isMomoLoading ? (
+            <div className="flex justify-center items-center py-6">
+              <MiniLoader />
+            </div>
+          ) : momoInitiated ? (
+            <div className="text-center py-4">
+              <div className="inline-flex items-start gap-3 p-4 rounded-lg bg-[#1f2a37] border border-green-700/40 text-left">
+                <span className="mt-0.5 text-green-400">
+                  <CheckedSvg />
+                </span>
+                <div>
+                  <p className="text-green-400 text-sm lg:text-base font-semibold">
+                    Payment initiated
+                  </p>
+                  <p className="text-gray-300 text-xs lg:text-sm mt-1">
+                    Please authorize the payment on your phone to continue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <MobilePaymentForm
+              paymentMethod={momoPaymentMethod}
+              phoneNumber={momoPhoneNumber}
+              handleInput={handleMomoPaymentFormInput}
+            />
+          )}
 
-          <div className="w-full flex justify-center mt-3">
-            <span
-              className="text-white text-xs lg:text-sm px-4 py-1 bg-blue-500 cursor-pointer hover:bg-blue-900"
-              onClick={handleNotifySeller}
-            >
-              Make Payment
-            </span>
-          </div>
+          {(!isMomoLoading || momoInitiated) && (
+            <div className="w-full flex justify-center mt-3">
+              <GradientActionButton
+                label={actionLabel}
+                // isLoading={isMomoLoading && !momoInitiated}
+                iconRight={<NextSvg />}
+                onClick={handleMomoAction}
+              />
+            </div>
+          )}
         </div>
       </DisplayDialog>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import FormInput from "./FormComponents/FormInput";
+import PaymentFormInput from "./FormComponents/PaymentFormInput";
 import PhoneSvg from "../UI/SvgIcons/PhoneSvg";
 import DropIcon from "../UI/SvgIcons/DropIcon";
 
@@ -19,7 +19,15 @@ const paymentMethods = [
   },
 ];
 
-export default function MobilePaymentForm() {
+export default function MobilePaymentForm({
+  paymentMethod,
+  phoneNumber,
+  handleInput,
+}: {
+  paymentMethod: string;
+  phoneNumber: string;
+  handleInput: (e: any) => void;
+}) {
   return (
     <div className="text-white space-y-5">
       <p className="text-lg font-semibold">Enter Mobile Money Details</p>
@@ -33,8 +41,9 @@ export default function MobilePaymentForm() {
             id="paymentMethod"
             name="paymentMethod"
             className="w-full appearance-none bg-[#23262F] text-white text-sm rounded-lg px-3 py-2.5 pr-10 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            defaultValue={paymentMethods[0].value}
+            defaultValue={paymentMethod}
             aria-label="Select payment method"
+            onChange={handleInput}
           >
             {paymentMethods.map((method) => (
               <option value={method.value} key={method.value}>
@@ -52,11 +61,13 @@ export default function MobilePaymentForm() {
         <label htmlFor="phoneNumber" className="text-xs text-gray-300">
           Phone Number
         </label>
-        <FormInput
+        <PaymentFormInput
           type="tel"
           placeholder="Enter mobile number"
           icon={<PhoneSvg />}
           name="phoneNumber"
+          defaultValue={phoneNumber}
+          handleInput={handleInput}
           inputMode="numeric"
           maxLength={10}
           htmlPattern="^\\d{10}$"

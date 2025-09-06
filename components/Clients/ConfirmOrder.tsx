@@ -115,35 +115,6 @@ const ConfirmOrder: React.FC<Props> = ({
     }
   };
 
-  const makeMomoPayment = async (id: number, loadingFunc: any) => {
-    let config = {
-      method: "POST",
-      maxBodyLength: Infinity,
-      url: `/api/momo-payment/`,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      data: { id },
-    };
-    try {
-      loadingFunc(true);
-      const response = await axios(config);
-
-      // console.log(response.data);
-      if (response.data.status) {
-        setPaystackLink(response.data.data.authorization_url);
-        // window.open(`${response.data.data.authorization_url}`, "_blank");
-        setOpenMomoDialog(true);
-      }
-    } catch (error: any) {
-      toast.error("Payment issue, please try again later");
-      console.log(error);
-    } finally {
-      loadingFunc(false);
-    }
-  };
-
   const makeUSDTPayment = async (id: number, loadingFunc: any) => {
     let config = {
       method: "POST",
@@ -168,16 +139,6 @@ const ConfirmOrder: React.FC<Props> = ({
       console.log(error);
     } finally {
       loadingFunc(false);
-    }
-  };
-
-  const sendPayment = async (id: number, loadingFunc: any, type: string) => {
-    // if (type.toLowerCase() == "momo") {
-    //   makeMomoPayment(id, loadingFunc);
-    // }
-    if (type.toLowerCase() == "usdt") {
-      const res = await makeUSDTPayment(id, loadingFunc);
-      return res;
     }
   };
 
@@ -377,7 +338,7 @@ const ConfirmOrder: React.FC<Props> = ({
                           method={method}
                           key={method.id}
                           id={id}
-                          makePayment={sendPayment}
+                          // makePayment={sendPayment}
                           loadingFunc={setLoading}
                           notifySeller={notifySellerHandlerNoTimer}
                           orderData={orderData}

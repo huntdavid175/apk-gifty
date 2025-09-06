@@ -30,6 +30,9 @@ const DisplayDialog: React.FC<Props> = ({
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      fullWidth
+      maxWidth="xs"
+      PaperProps={{ sx: { width: 420 } }}
     >
       <DialogTitle id="alert-dialog-title" sx={sx}>
         {title}
