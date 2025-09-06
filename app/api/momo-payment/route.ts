@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request, res: Response) {
   const body = await req.json();
 
-  const { id } = await body;
+  const { id, paymentMethod, phoneNumber } = await body;
 
   let config = {
     method: "POST",
@@ -14,6 +14,10 @@ export async function POST(req: Request, res: Response) {
       "Content-Type": "application/json",
       Accept: "application/json",
       // Authorization: accessToken,
+    },
+    data: {
+      paymentMode: paymentMethod,
+      phoneNumber,
     },
   };
 
@@ -28,4 +32,11 @@ export async function POST(req: Request, res: Response) {
       headers: error.response.header,
     });
   }
+}
+
+export async function GET(req: Request, res: Response) {
+  const { id } = await req.json();
+
+  const response = await axiosInstance.get(`/pay/${id}`);
+  return NextResponse.json(response.data);
 }

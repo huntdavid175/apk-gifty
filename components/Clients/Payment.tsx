@@ -7,6 +7,7 @@ import DisplayDialog from "../UI/Dialog/Dialog";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { sendAdminEmail } from "@/utils/emailjs";
 import { order } from "@/redux/features/orderSlice";
+import MobilePaymentForm from "../Form/MobilePaymentForm";
 
 const makeUSDTPayment = async (id: number, loadingFunc: any) => {
   let config = {
@@ -156,6 +157,42 @@ const Payment = ({
               onClick={handleNotifySeller}
             >
               Payment Sent
+            </span>
+          </div>
+        </div>
+      </DisplayDialog>
+    );
+  } else if (method.channel.toLowerCase() === "momo") {
+    dialog = (
+      <DisplayDialog
+        title={method.channel}
+        buttonText="Continue"
+        open={open}
+        handleClose={() => setOpen(false)}
+        sx={{
+          backgroundColor: "#161D26",
+          borderColor: "black",
+          color: "white",
+        }}
+      >
+        {method.image_url && (
+          <div className="w-[250px] h-[250px] m-auto relative px-1 py-1 bg-white">
+            <Image src={method.image_url} fill alt="payment qr code" />
+          </div>
+        )}
+
+        <div>
+          <MobilePaymentForm
+          // paymentMethod={method.payment_method}
+          // phoneNumber={method.phone_number}
+          />
+
+          <div className="w-full flex justify-center mt-3">
+            <span
+              className="text-white text-xs lg:text-sm px-4 py-1 bg-blue-500 cursor-pointer hover:bg-blue-900"
+              onClick={handleNotifySeller}
+            >
+              Make Payment
             </span>
           </div>
         </div>

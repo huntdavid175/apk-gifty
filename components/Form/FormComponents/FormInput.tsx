@@ -26,6 +26,10 @@ interface Props {
   watch?: any;
   currentCountry?: string;
   selectOptions?: any;
+  inputMode?: string;
+  maxLength?: number;
+  htmlPattern?: string;
+  onInput?: React.FormEventHandler<HTMLInputElement>;
 }
 
 interface CountriesData {
@@ -48,6 +52,10 @@ const FormInput: React.FC<Props> = ({
   watch,
   currentCountry,
   selectOptions,
+  inputMode,
+  maxLength,
+  htmlPattern,
+  onInput,
 }) => {
   const j = register ? { ...register(name, config) } : { ...{} };
 
@@ -97,6 +105,10 @@ const FormInput: React.FC<Props> = ({
           autoComplete="off"
           defaultValue={defaultValue}
           readOnly={readOnly}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          pattern={htmlPattern}
+          onInput={onInput}
           {...j}
         />
       )}
