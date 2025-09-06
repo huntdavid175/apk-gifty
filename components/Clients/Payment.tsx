@@ -101,6 +101,28 @@ const sendPayment = async (
   }
 };
 
+const confirmMomoPayment = async (
+  id: number,
+  loadingFunc: any,
+  notifySeller: any
+) => {
+  try {
+    const response = await axios.get(`/api/momo-payment`, { params: { id } });
+    if (response.status === 200) {
+      if (response.data.is_paid === false) {
+        toast.warn("Payment not confirmed. Please try again.");
+        return;
+      }
+      toast.success("Payment confirmed successfully");
+      notifySeller();
+      return response.data;
+    }
+  } catch (error: any) {
+    console.log(error);
+    toast.error("Could not confirm payment. Please try again.");
+  }
+};
+
 const Payment = ({
   method,
   makePayment,
@@ -125,6 +147,7 @@ const Payment = ({
   const [momoPhoneNumber, setMomoPhoneNumber] = useState<string>("");
   const [isMomoLoading, setIsMomoLoading] = useState<boolean>(false);
   const [momoInitiated, setMomoInitiated] = useState<boolean>(false);
+  const [momoPaid, setMomoPaid] = useState<boolean>(false);
 
   let methodImage;
   let dialog;
@@ -182,10 +205,30 @@ const Payment = ({
     }
   };
 
+  // Guard dialog close for momo after initiation until paid
+  const handleGuardedClose = () => {
+    if (method.channel.toLowerCase() === "momo" && momoInitiated && !momoPaid) {
+      toast.warn("Payment not completed yet. Please authorize on your phone.");
+      return;
+    }
+    setOpen(false);
+  };
+
   // Extracted action handler for MoMo button
   const handleMomoAction = async () => {
     if (momoInitiated) {
-      await handleNotifySeller();
+      try {
+        setIsMomoLoading(true);
+        const res = await confirmMomoPayment(id, loadingFunc, notifySeller);
+        if (res && res.is_paid) {
+          setMomoPaid(true);
+          setOpen(false);
+        }
+      } catch (e) {
+        // error toast handled in confirmMomoPayment if any
+      } finally {
+        setIsMomoLoading(false);
+      }
       return;
     }
     try {
@@ -220,6 +263,33 @@ const Payment = ({
       })();
     }
   }, [paymentInitiated]);
+
+  // Poll every 7s after MoMo initiation to auto-check payment status
+  useEffect(() => {
+    if (
+      method.channel.toLowerCase() === "momo" &&
+      momoInitiated &&
+      open &&
+      !momoPaid
+    ) {
+      const intervalId = setInterval(async () => {
+        try {
+          const res = await axios.get(`/api/momo-payment`, { params: { id } });
+          if (res.status === 200 && res.data?.is_paid) {
+            setMomoPaid(true);
+            toast.success("Payment confirmed successfully");
+            if (notifySeller) notifySeller();
+            setOpen(false);
+            clearInterval(intervalId);
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }, 7000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [method.channel, momoInitiated, open, momoPaid, id]);
 
   if (method.channel.toLowerCase() === "usdt") {
     dialog = usdtPaymentDetails && (
@@ -279,7 +349,7 @@ const Payment = ({
         title={method.channel}
         buttonText="Continue"
         open={open}
-        handleClose={() => setOpen(false)}
+        handleClose={handleGuardedClose}
         sx={{
           backgroundColor: "#161D26",
           borderColor: "black",
