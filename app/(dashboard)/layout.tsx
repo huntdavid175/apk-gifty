@@ -10,6 +10,8 @@ import DashMobileSide from "@/components/Mobile/DashMobileSide";
 import NotificationListener from "@/components/Dashboard/Data/NotificationListener";
 import Sidebar from "@/components/Dashboard/Sidebar/Sidebar";
 import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,6 +51,11 @@ export default function RootLayout({
           {/* <MobileNav /> */}
         </Providers>
         <Analytics />
+        <ToastContainer
+          style={{ zIndex: 9999 }}
+          position="top-right"
+          newestOnTop
+        />
       </body>
     </html>
   );
