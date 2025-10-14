@@ -163,7 +163,7 @@ const ConfirmOrder: React.FC<Props> = ({
   //             },
   //           }
   //         );
-
+  //
   //         // console.log(response.data.data);
   //         setLoading(false);
   //         setStatuss(response.data.data.status);
@@ -175,9 +175,9 @@ const ConfirmOrder: React.FC<Props> = ({
   //     };
   //     getOrder(id);
   //   };
-
+  //
   //   updateStatus();
-
+  //
   //   return () => setLoading(false);
   // }, []);
 
@@ -330,21 +330,51 @@ const ConfirmOrder: React.FC<Props> = ({
               </p> */}
 
                 {loading ? null : (
-                  <ul className=" mt-6 flex flex-col items-center gap-y-4">
-                    {makePayment &&
-                      is_paid === "0" &&
-                      filteredPaymentMethods.map((method: any) => (
-                        <Payment
-                          method={method}
-                          key={method.id}
-                          id={id}
-                          // makePayment={sendPayment}
-                          loadingFunc={setLoading}
-                          notifySeller={notifySellerHandlerNoTimer}
-                          orderData={orderData}
-                        />
-                      ))}
-                  </ul>
+                  <>
+                    {makePayment && is_paid === "0" && (
+                      <>
+                        <h3 className="text-white text-sm lg:text-base font-medium mt-8">
+                          Select payment method
+                        </h3>
+                        <ul className="mt-3 flex flex-col items-center gap-y-4">
+                          {filteredPaymentMethods.map((method: any) => (
+                            <Payment
+                              method={method}
+                              key={method.id}
+                              id={id}
+                              // makePayment={sendPayment}
+                              loadingFunc={setLoading}
+                              notifySeller={notifySellerHandlerNoTimer}
+                              orderData={orderData}
+                              amountGhc={Number(price) * Number(rate)}
+                            />
+                          ))}
+                        </ul>
+                        <div className="mt-4 flex items-start gap-3 px-2">
+                          <input
+                            id="accept-terms"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-gray-500 bg-transparent text-blue-500 focus:ring-blue-500"
+                          />
+                          <label
+                            htmlFor="accept-terms"
+                            className="text-xs lg:text-sm text-gray-300"
+                          >
+                            Click to accept our{" "}
+                            <a
+                              href="/terms-of-service"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 underline"
+                            >
+                              Terms & Conditions
+                            </a>
+                            .
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </>
                 )}
               </>
             )}

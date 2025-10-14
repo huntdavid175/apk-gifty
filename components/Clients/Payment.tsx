@@ -14,6 +14,16 @@ import CheckedSvg from "../UI/SvgIcons/CheckedSvg";
 import NextSvg from "../UI/SvgIcons/NextSvg";
 import GradientActionButton from "../UI/GradientActionButton";
 
+interface PaymentProps {
+  method: any;
+  makePayment?: any;
+  id: number;
+  loadingFunc?: any;
+  notifySeller?: any;
+  orderData: any;
+  amountGhc?: number;
+}
+
 const makeMomoPayment = async (
   id: number,
   loadingFunc: any,
@@ -123,25 +133,20 @@ const confirmMomoPayment = async (
   }
 };
 
-const Payment = ({
+const Payment: React.FC<PaymentProps> = ({
   method,
   makePayment,
   id,
   loadingFunc,
   notifySeller,
   orderData,
-}: {
-  method: any;
-  makePayment?: any;
-  id: number;
-  loadingFunc?: any;
-  notifySeller?: any;
-  orderData: any;
+  amountGhc,
 }) => {
   const [open, setOpen] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const [usdtPaymentDetails, setUsdtPaymentDetails] = useState<any>(null);
   const [showUsdtDialog, setShowUsdtDialog] = useState(false);
+  const [isUsdtLoading, setIsUsdtLoading] = useState(false);
   const [momoPaymentMethod, setMomoPaymentMethod] =
     useState<string>("MTN_MONEY");
   const [momoPhoneNumber, setMomoPhoneNumber] = useState<string>("");
@@ -149,20 +154,12 @@ const Payment = ({
   const [momoInitiated, setMomoInitiated] = useState<boolean>(false);
   const [momoPaid, setMomoPaid] = useState<boolean>(false);
 
-  let methodImage;
   let dialog;
-
-  if (method.channel.toLowerCase() === "momo") {
-    methodImage = "/images/momopayment.jpeg";
-  } else if (method.channel.toLowerCase() === "bank") {
-    methodImage = "/images/bankpayment.jpeg";
-  } else if (method.channel.toLowerCase() === "usdt") {
-    methodImage = "/images/usdtpayment.png";
-  }
 
   const handleClick = (e: any) => {
     if (method.channel.toLowerCase() === "usdt") {
       setPaymentInitiated(true);
+      setShowUsdtDialog(true);
       setOpen(true);
     }
     setOpen(true);
@@ -197,9 +194,6 @@ const Payment = ({
       if (method.channel.toLowerCase() === "momo") {
         console.log(momoPaymentMethod, momoPhoneNumber);
       }
-      // notifySeller();
-      // setOpen(false);
-      // sendAdminEmail(orderData);
     } catch (error) {
       console.log(error);
     }
@@ -256,9 +250,7 @@ const Payment = ({
   useEffect(() => {
     if (paymentInitiated && method.channel.toLowerCase() === "usdt") {
       (async () => {
-        const paymentDets = await makeUSDTPayment(id, setShowUsdtDialog);
-        // console.log(paymentDets);
-
+        const paymentDets = await makeUSDTPayment(id, setIsUsdtLoading);
         setUsdtPaymentDetails(paymentDets);
       })();
     }
@@ -292,55 +284,104 @@ const Payment = ({
   }, [method.channel, momoInitiated, open, momoPaid, id]);
 
   if (method.channel.toLowerCase() === "usdt") {
-    dialog = usdtPaymentDetails && (
+    dialog = (
       <DisplayDialog
-        title={method.channel}
-        buttonText="Continue"
+        title={""}
+        buttonText={""}
         open={showUsdtDialog}
-        handleClose={() => setOpen(false)}
+        handleClose={() => setShowUsdtDialog(false)}
         sx={{
-          backgroundColor: "#161D26",
-          borderColor: "black",
-          color: "white",
+          backgroundColor: "#f5f7fb",
+          borderColor: "transparent",
+          color: "#0b1520",
         }}
+        maxWidthProp="sm"
+        paperSx={{ width: 520 }}
       >
-        <div>
-          <div>
-            <p className="text-orange-400">
-              {usdtPaymentDetails.payment_address}
-            </p>
-            <p className="text-white mt-2">
-              Network: {usdtPaymentDetails?.payment_type?.toUpperCase()}
-            </p>
-            <p className="text-white mt-2">
-              Amount: ${usdtPaymentDetails?.amount}
-            </p>
-            <div className="text-center mt-3">
-              <p
-                className="py-2 px-3 bg-primary rounded-2xl text-white flex justify-center items-center gap-x-1 text-xs lg:text-sm cursor-pointer"
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    usdtPaymentDetails.payment_address
-                  )
-                }
-              >
-                <span>
-                  <ContentCopyIcon />
-                </span>
-                Copy Address
+        {isUsdtLoading || !usdtPaymentDetails ? (
+          <div className="flex justify-center items-center py-6">
+            <MiniLoader />
+          </div>
+        ) : (
+          <div className="space-y-5 text-[#0b1520]">
+            <div className="w-full flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-[#e6eef9] flex items-center justify-center">
+                <span className="text-3xl">₮</span>
+              </div>
+              <h3 className="mt-3 text-[26px] font-semibold">
+                Pay With Crypto(USDT)
+              </h3>
+            </div>
+
+            {/* Amount box */}
+            <div className="bg-[#e9f0f8] rounded-xl px-6 py-5 text-center">
+              <p className="text-sm opacity-70">
+                Send exactly this amount in USDT:
+              </p>
+              <p className="text-3xl lg:text-4xl font-extrabold mt-2 text-[#0b1520]">
+                ₵{(amountGhc ?? usdtPaymentDetails?.amount ?? 0).toFixed(2)}
               </p>
             </div>
-          </div>
 
-          <div className="w-full flex justify-center mt-7">
-            <span
-              className="text-white text-xs lg:text-sm px-4 py-1 bg-blue-500 cursor-pointer hover:bg-blue-900"
-              onClick={handleNotifySeller}
-            >
-              Payment Sent
-            </span>
+            {/* Wallet box */}
+            <div className="rounded-xl border border-[#e9f0f8] bg-[#e9f0f8] px-4 py-4 text-sm">
+              <p className="text-center font-medium mb-2">
+                Send to this address
+              </p>
+              <div className="bg-[#e9f0f8] rounded-lg border border-[#e9f0f8] px-3 py-3 w-full max-w-[420px] mx-auto">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <span className="text-[12px] text-[#5b6b7f]">Wallet :</span>
+                  <span className="text-sm font-semibold text-[#0b1520] break-all">
+                    {usdtPaymentDetails.payment_address}
+                  </span>
+                  <button
+                    className="text-blue-500"
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        String(usdtPaymentDetails.payment_address)
+                      )
+                    }
+                    aria-label="Copy wallet address"
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <a
+                href="#"
+                className="text-blue-500 text-sm font-semibold underline"
+              >
+                What to do next?
+              </a>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-[#0b1520]">
+              <span className="text-xl">🕒</span>
+              <span className="text-sm lg:text-base">Payment expires in:</span>
+              <span className="text-[#e53935] font-semibold ml-2">
+                {/* dynamic countdown can be passed in */}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-center gap-6">
+              <button
+                className="px-8 py-3 rounded-2xl bg-[#1a73e8] hover:bg-[#155fc0] text-white font-semibold"
+                onClick={handleNotifySeller}
+              >
+                Paid
+              </button>
+              <button
+                className="text-[#5b6b7f] hover:text-[#0b1520] underline text-sm"
+                onClick={() => setShowUsdtDialog(false)}
+              >
+                Cancel order
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </DisplayDialog>
     );
   } else if (method.channel.toLowerCase() === "momo") {
@@ -405,55 +446,163 @@ const Payment = ({
       </DisplayDialog>
     );
   } else {
+    console.log(method);
+    const bankName =
+      method?.body.split(" ")[0] + " " + method?.body.split(" ")[1];
+    const accountNumber = method?.body.split(" ")[2];
+    const accountName =
+      method?.sub_text.split(" ")[0] +
+      " " +
+      method?.sub_text.split(" ")[1] +
+      " " +
+      method?.sub_text.split(" ")[2];
     dialog = (
       <DisplayDialog
-        title={method.channel}
-        buttonText="Continue"
+        title={""}
+        buttonText={""}
         open={open}
         handleClose={() => setOpen(false)}
         sx={{
-          backgroundColor: "#161D26",
-          borderColor: "black",
-          color: "white",
+          backgroundColor: "#f5f7fb",
+          borderColor: "transparent",
+          color: "#0b1520",
         }}
+        maxWidthProp="sm"
+        paperSx={{ width: 520 }}
       >
-        {method.image_url && (
-          <div className="w-[250px] h-[250px] m-auto relative px-1 py-1 bg-white">
-            <Image src={method.image_url} fill alt="payment qr code" />
+        <div className="space-y-5 text-[#0b1520]">
+          <div className="w-full flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-[#e6eef9] flex items-center justify-center text-2xl">
+              🏦
+            </div>
+            <h3 className="mt-3 text-[26px] font-semibold">Pay With Bank</h3>
           </div>
-        )}
-        <div>
-          <p className="inline-block px-3 py-1 text-white rounded-lg">
-            <span>{method.body}</span>
-          </p>
-        </div>
-        <div>
-          <p className="inline-block px-3 py-1 text-blue-600  rounded-lg">
-            <span className="text-white">Name:</span> {method.sub_text}
-          </p>
 
-          <div className="w-full flex justify-center mt-3">
-            <span
-              className="text-white text-xs lg:text-sm px-4 py-1 bg-blue-500 cursor-pointer hover:bg-blue-900"
+          {/* Amount box */}
+          <div className="bg-[#e9f0f8] rounded-xl px-6 py-5 text-center">
+            <p className="text-sm opacity-70">Send exactly this amount:</p>
+            <p className="text-3xl lg:text-4xl font-extrabold mt-2 text-[#0b1520]">
+              ₵{(amountGhc ?? orderData?.price ?? 0).toFixed(2)}
+            </p>
+          </div>
+
+          {/* Bank details */}
+          <div className="rounded-xl border border-[#e9f0f8] bg-[#e9f0f8] px-4 py-4 text-sm">
+            <p className="font-medium text-center mb-3">Bank Details:</p>
+            <div className="space-y-3 flex flex-col items-center">
+              <div className="bg-white rounded-lg border border-[#dde6f2] px-3 py-3 w-full max-w-[340px]">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-[12px] text-[#5b6b7f] text-center">
+                    Account Number
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-[#0b1520] break-all text-center">
+                      {accountNumber}
+                    </p>
+                    <button
+                      className="text-blue-500"
+                      onClick={() =>
+                        navigator.clipboard.writeText(String(accountNumber))
+                      }
+                      aria-label="Copy account number"
+                    >
+                      <ContentCopyIcon fontSize="small" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border border-[#dde6f2] px-3 py-3 w-full max-w-[340px]">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-[12px] text-[#5b6b7f] text-center">
+                    Account Name
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-[#0b1520] break-words text-center">
+                      {accountName}
+                    </p>
+                    <button
+                      className="text-blue-500"
+                      onClick={() =>
+                        navigator.clipboard.writeText(String(accountName))
+                      }
+                      aria-label="Copy account name"
+                    >
+                      <ContentCopyIcon fontSize="small" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border border-[#dde6f2] px-3 py-3 w-full max-w-[340px]">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-[12px] text-[#5b6b7f] text-center">
+                    Bank Name
+                  </p>
+                  <p className="text-sm text-[#0b1520] break-words text-center">
+                    {bankName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <a
+              href="#"
+              className="text-blue-500 text-sm font-semibold underline"
+            >
+              What to do next?
+            </a>
+          </div>
+
+          {/* Expiry */}
+          <div className="flex items-center justify-center gap-2 text-[#0b1520]">
+            <span className="text-xl">🕒</span>
+            <span className="text-sm lg:text-base">Payment expires in:</span>
+            <span className="text-[#e53935] font-semibold ml-2">
+              {/* dynamic countdown can be passed in */}
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-center gap-6">
+            <button
+              className="px-8 py-3 rounded-2xl bg-[#1a73e8] hover:bg-[#155fc0] text-white font-semibold"
               onClick={handleNotifySeller}
             >
-              Payment Sent
-            </span>
+              Paid
+            </button>
+            <button
+              className="text-[#5b6b7f] hover:text-[#0b1520] underline text-sm"
+              onClick={() => setOpen(false)}
+            >
+              Cancel order
+            </button>
           </div>
         </div>
       </DisplayDialog>
     );
   }
 
+  const displayLabel =
+    method.channel.toLowerCase() === "usdt"
+      ? "Pay with Crypto(USDT)"
+      : method.channel.toLowerCase() === "momo"
+      ? "Pay with Ghana Cedis(Momo)"
+      : method.channel.toLowerCase() === "bank"
+      ? "Pay with Bank"
+      : `Pay with ${method.channel}`;
+
   return (
     <>
-      <li className="cursor-pointer" onClick={handleClick}>
-        <div
-          className="space-y-3 py-6 lg:py-8 w-[180px] lg:w-[220px] bg-cover bg-center rounded-lg bg-white"
-          style={{
-            backgroundImage: `url(${methodImage})`,
-          }}
-        ></div>
+      <li className="cursor-pointer w-full" onClick={handleClick}>
+        <div className="w-full flex items-center justify-between px-5 py-5 rounded-xl bg-[#1f2a37] border border-[#2a3441] hover:bg-[#232c38] transition">
+          <span className="text-white text-sm lg:text-base">
+            {displayLabel}
+          </span>
+          <span className="h-5 w-5 rounded-full border-2 border-gray-400" />
+        </div>
       </li>
       {dialog}
     </>
