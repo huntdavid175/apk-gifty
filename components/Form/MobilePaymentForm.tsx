@@ -29,18 +29,18 @@ export default function MobilePaymentForm({
   handleInput: (e: any) => void;
 }) {
   return (
-    <div className="text-white space-y-5">
+    <div className="text-[#0b1520] space-y-5">
       <p className="text-lg font-semibold">Enter Mobile Money Details</p>
 
       <div className="space-y-2">
-        <label htmlFor="paymentMethod" className="text-xs text-gray-300">
+        <label htmlFor="paymentMethod" className="text-xs text-[#5b6b7f]">
           Payment Method
         </label>
         <div className="relative">
           <select
             id="paymentMethod"
             name="paymentMethod"
-            className="w-full appearance-none bg-[#23262F] text-white text-sm rounded-lg px-3 py-2.5 pr-10 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+            className="w-full appearance-none bg-white text-[#0b1520] text-sm rounded-lg px-3 py-2.5 pr-10 border border-[#dde6f2] focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-[#1a73e8] transition"
             defaultValue={paymentMethod}
             aria-label="Select payment method"
             onChange={handleInput}
@@ -51,20 +51,20 @@ export default function MobilePaymentForm({
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5b6b7f]">
             <DropIcon />
           </span>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="phoneNumber" className="text-xs text-gray-300">
+        <label htmlFor="phoneNumber" className="text-xs text-[#5b6b7f]">
           Phone Number
         </label>
         <PaymentFormInput
           type="tel"
           placeholder="Enter mobile number"
-          icon={<PhoneSvg />}
+          icon={<PhoneSvg color="#0b1520" />}
           name="phoneNumber"
           defaultValue={phoneNumber}
           handleInput={handleInput}
@@ -75,9 +75,9 @@ export default function MobilePaymentForm({
             const target = e.target as HTMLInputElement;
             target.value = target.value.replace(/[^0-9]/g, "").slice(0, 10);
           }}
-          className="bg-[#23262F] rounded-lg px-3 py-2.5 border border-transparent focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition"
+          className="bg-white rounded-lg px-3 py-2.5 border border-[#dde6f2] focus-within:ring-2 focus-within:ring-[#1a73e8] focus-within:border-[#1a73e8] transition"
         />
-        <p className="text-[11px] text-gray-400">
+        <p className="text-[11px] text-[#5b6b7f]">
           Use the number registered with your wallet.
         </p>
       </div>

@@ -11,7 +11,6 @@ import MobilePaymentForm from "../Form/MobilePaymentForm";
 import { toast } from "react-toastify";
 import MiniLoader from "../UI/Loader/MiniLoader";
 import CheckedSvg from "../UI/SvgIcons/CheckedSvg";
-import NextSvg from "../UI/SvgIcons/NextSvg";
 import GradientActionButton from "../UI/GradientActionButton";
 
 interface PaymentProps {
@@ -210,6 +209,10 @@ const Payment: React.FC<PaymentProps> = ({
 
   // Extracted action handler for MoMo button
   const handleMomoAction = async () => {
+    if (!momoInitiated && momoPhoneNumber.trim() === "") {
+      toast.warn("Please enter your phone number to continue.");
+      return;
+    }
     if (momoInitiated) {
       try {
         setIsMomoLoading(true);
@@ -387,61 +390,89 @@ const Payment: React.FC<PaymentProps> = ({
   } else if (method.channel.toLowerCase() === "momo") {
     dialog = (
       <DisplayDialog
-        title={method.channel}
-        buttonText="Continue"
+        title={""}
+        buttonText={""}
         open={open}
         handleClose={handleGuardedClose}
         sx={{
-          backgroundColor: "#161D26",
-          borderColor: "black",
-          color: "white",
+          backgroundColor: "#f5f7fb",
+          borderColor: "transparent",
+          color: "#0b1520",
         }}
+        maxWidthProp="sm"
+        paperSx={{ width: 520 }}
       >
-        {method.image_url && (
-          <div className="w-[250px] h-[250px] m-auto relative px-1 py-1 bg-white">
-            <Image src={method.image_url} fill alt="payment qr code" />
+        <div className="space-y-5 text-[#0b1520]">
+          <div className="w-full flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-[#e6eef9] flex items-center justify-center text-2xl">
+              📱
+            </div>
+            <h3 className="mt-3 text-[26px] font-semibold">
+              Pay With Ghana Cedis (MoMo)
+            </h3>
           </div>
-        )}
 
-        <div>
+          <div className="bg-[#e9f0f8] rounded-xl px-6 py-5 text-center">
+            <p className="text-sm opacity-70">
+              Send exactly this amount in GHC:
+            </p>
+            <p className="text-3xl lg:text-4xl font-extrabold mt-2 text-[#0b1520]">
+              ₵{(amountGhc ?? orderData?.price ?? 0).toFixed(2)}
+            </p>
+          </div>
+
           {isMomoLoading ? (
             <div className="flex justify-center items-center py-6">
               <MiniLoader />
             </div>
           ) : momoInitiated ? (
-            <div className="text-center py-4">
-              <div className="inline-flex items-start gap-3 p-4 rounded-lg bg-[#1f2a37] border border-green-700/40 text-left">
-                <span className="mt-0.5 text-green-400">
+            <div className="text-center py-2">
+              <div className="inline-flex items-start gap-3 p-4 rounded-lg bg-[#e6eef9] border border-green-700/20 text-left">
+                <span className="mt-0.5 text-green-600">
                   <CheckedSvg />
                 </span>
                 <div>
-                  <p className="text-green-400 text-sm lg:text-base font-semibold">
+                  <p className="text-green-700 text-sm lg:text-base font-semibold">
                     Payment initiated
                   </p>
-                  <p className="text-gray-300 text-xs lg:text-sm mt-1">
+                  <p className="text-[#0b1520] text-xs lg:text-sm mt-1 opacity-80">
                     Please authorize the payment on your phone to continue.
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            <MobilePaymentForm
-              paymentMethod={momoPaymentMethod}
-              phoneNumber={momoPhoneNumber}
-              handleInput={handleMomoPaymentFormInput}
-            />
-          )}
-
-          {(!isMomoLoading || momoInitiated) && (
-            <div className="w-full flex justify-center mt-3">
-              <GradientActionButton
-                label={actionLabel}
-                // isLoading={isMomoLoading && !momoInitiated}
-                iconRight={<NextSvg />}
-                onClick={handleMomoAction}
+            <div className="rounded-xl border border-[#e9f0f8] bg-[#e9f0f8] px-4 py-4">
+              <MobilePaymentForm
+                paymentMethod={momoPaymentMethod}
+                phoneNumber={momoPhoneNumber}
+                handleInput={handleMomoPaymentFormInput}
               />
             </div>
           )}
+
+          <div className="flex items-center justify-center gap-6">
+            <button
+              className={`px-8 py-3 rounded-2xl font-semibold text-white ${
+                !momoInitiated && momoPhoneNumber.trim().length === 0
+                  ? "bg-gray-300 cursor-not-allowed opacity-60"
+                  : "bg-[#1a73e8] hover:bg-[#155fc0]"
+              }`}
+              onClick={handleMomoAction}
+              disabled={!momoInitiated && momoPhoneNumber.trim().length === 0}
+              aria-disabled={
+                !momoInitiated && momoPhoneNumber.trim().length === 0
+              }
+            >
+              {actionLabel}
+            </button>
+            <button
+              className="text-[#5b6b7f] hover:text-[#0b1520] underline text-sm"
+              onClick={handleGuardedClose}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </DisplayDialog>
     );
