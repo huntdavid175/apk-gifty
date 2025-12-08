@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import DashMobileSide from "@/components/Mobile/DashMobileSide";
 import NotificationListener from "@/components/Dashboard/Data/NotificationListener";
+import InitWebPush from "@/components/Dashboard/InitWebPush";
 import Sidebar from "@/components/Dashboard/Sidebar/Sidebar";
 import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { ToastContainer } from "react-toastify";
@@ -48,6 +49,7 @@ export default function RootLayout({
           </div>
           <DashMobileSide />
           <NotificationListener token={accessToken!} />
+          <InitWebPush />
           {/* <MobileNav /> */}
         </Providers>
         <Analytics />

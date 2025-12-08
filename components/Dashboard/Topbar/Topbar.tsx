@@ -15,6 +15,7 @@ import MenuButton from "@/components/UI/MenuButton";
 import CartCountIcon from "./CartCountIcon";
 import NotificationsDropdown from "./NotificationsDropDown";
 import CartDropdown from "./CartDropDown";
+import SendTestNotificationButton from "@/components/Dashboard/SendTestNotificationButton";
 
 const Topbar = () => {
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -87,9 +88,10 @@ const Topbar = () => {
               1
             </span>
           </Link> */}
-          {/* <NotificationsDropdown /> */}
+          <NotificationsDropdown />
           <CartDropdown />
           {/* <CartCountIcon /> */}
+          <SendTestNotificationButton />
         </div>
         {/* <Iconcard icon={<WalletSvg />} animate /> */}
         {/* <Iconcard icon={<SettingsSvg />} animate /> */}
