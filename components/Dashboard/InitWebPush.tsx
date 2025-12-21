@@ -8,6 +8,16 @@ import {
 import { subscribeForegroundMessages } from "@/utils/firebaseMessaging";
 
 export default function InitWebPush() {
+  function playNotificationSound() {
+    try {
+      const audio = new Audio("/audio/notification.ogg");
+      audio.volume = 1.0;
+      audio.play().catch(() => {});
+    } catch {
+      // ignore audio errors
+    }
+  }
+
   function appendNotificationToLocalStorage(entry: {
     id: string;
     title: string;
@@ -86,6 +96,7 @@ export default function InitWebPush() {
             timestamp: new Date().toISOString(),
             read: false,
           });
+          playNotificationSound();
           if (
             typeof window !== "undefined" &&
             "Notification" in window &&
@@ -138,6 +149,7 @@ export default function InitWebPush() {
             timestamp: new Date().toISOString(),
             read: false,
           });
+          playNotificationSound();
         }
       } catch {
         // ignore

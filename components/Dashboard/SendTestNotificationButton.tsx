@@ -36,7 +36,10 @@ export default function SendTestNotificationButton() {
     try {
       const res = await fetch("/api/send-notification", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
           user_id: userId,
           title,
@@ -56,7 +59,11 @@ export default function SendTestNotificationButton() {
 
       // Show a local confirmation notification on successful send
       try {
-        if (res.ok && typeof window !== "undefined" && "Notification" in window) {
+        if (
+          res.ok &&
+          typeof window !== "undefined" &&
+          "Notification" in window
+        ) {
           if (Notification.permission === "granted") {
             const n = new Notification(title, {
               body: messageBody,
@@ -82,6 +89,14 @@ export default function SendTestNotificationButton() {
               });
               localStorage.setItem("notifications", JSON.stringify(list));
               window.dispatchEvent(new CustomEvent("notifications-updated"));
+              // Play notification sound
+              try {
+                const audio = new Audio("/audio/notification.ogg");
+                audio.volume = 1.0;
+                audio.play().catch(() => {});
+              } catch {
+                // ignore audio errors
+              }
             } catch {
               // ignore
             }
@@ -91,7 +106,10 @@ export default function SendTestNotificationButton() {
         }
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.error("[Notifications] Local confirmation notification error", e);
+        console.error(
+          "[Notifications] Local confirmation notification error",
+          e
+        );
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -113,5 +131,3 @@ export default function SendTestNotificationButton() {
     </button>
   );
 }
-
-
