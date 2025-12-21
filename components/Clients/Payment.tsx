@@ -66,6 +66,39 @@ const makeMomoPayment = async (
   }
 };
 
+const makeCardPayment = async (id: number, loadingFunc: any, phoneNumber: string) => {
+  let config = {
+    method: "POST",
+    maxBodyLength: Infinity,
+    url: `/api/momo-payment/`,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    data: {
+      id,
+      paymentMethod: "CARD",
+      phoneNumber,
+    },
+  };
+  try {
+    loadingFunc(true);
+    const response = await axios(config);
+    // eslint-disable-next-line no-console
+    console.log("[CardPayment] Response:", response.status, response.data);
+    if (response.status === 200) {
+      toast.success("Payment initiated successfully");
+      return response.data;
+    }
+  } catch (error: any) {
+    // eslint-disable-next-line no-console
+    console.log("[CardPayment] Error:", error?.response?.data || error);
+    toast.error("Payment issue, please try again later");
+  } finally {
+    loadingFunc(false);
+  }
+};
+
 const makeUSDTPayment = async (id: number, loadingFunc: any) => {
   let config = {
     method: "POST",
@@ -152,6 +185,8 @@ const Payment: React.FC<PaymentProps> = ({
   const [isMomoLoading, setIsMomoLoading] = useState<boolean>(false);
   const [momoInitiated, setMomoInitiated] = useState<boolean>(false);
   const [momoPaid, setMomoPaid] = useState<boolean>(false);
+  const [isCardLoading, setIsCardLoading] = useState<boolean>(false);
+  const [cardPhoneNumber, setCardPhoneNumber] = useState<string>("");
 
   let dialog;
 
@@ -476,6 +511,103 @@ const Payment: React.FC<PaymentProps> = ({
         </div>
       </DisplayDialog>
     );
+  } else if (method.channel.toLowerCase() === "card") {
+    dialog = (
+      <DisplayDialog
+        title={""}
+        buttonText={""}
+        open={open}
+        handleClose={() => setOpen(false)}
+        sx={{
+          backgroundColor: "#f5f7fb",
+          borderColor: "transparent",
+          color: "#0b1520",
+        }}
+        maxWidthProp="sm"
+        paperSx={{ width: 520 }}
+      >
+        <div className="space-y-5 text-[#0b1520]">
+          <div className="w-full flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-[#e6eef9] flex items-center justify-center text-3xl">
+              💳
+            </div>
+            <h3 className="mt-3 text-[26px] font-semibold">
+              Pay With Visa / Mastercard
+            </h3>
+          </div>
+
+          <div className="bg-[#e9f0f8] rounded-xl px-6 py-5 text-center">
+            <p className="text-sm opacity-70">Amount to pay:</p>
+            <p className="text-3xl lg:text-4xl font-extrabold mt-2 text-[#0b1520]">
+              ₵{(amountGhc ?? orderData?.price ?? 0).toFixed(2)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#e9f0f8] bg-[#e9f0f8] px-4 py-5 text-center">
+            <p className="text-sm text-[#0b1520]">
+              Make payment with your Visa or Mastercard. You will be redirected
+              to a secure payment page.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#e9f0f8] bg-[#e9f0f8] px-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="cardPhoneNumber" className="text-xs text-[#5b6b7f]">
+                Phone Number
+              </label>
+              <input
+                id="cardPhoneNumber"
+                type="tel"
+                placeholder="Enter mobile number"
+                value={cardPhoneNumber}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                  setCardPhoneNumber(val);
+                }}
+                inputMode="numeric"
+                maxLength={10}
+                className="w-full bg-white text-[#0b1520] text-sm rounded-lg px-3 py-2.5 border border-[#dde6f2] focus:outline-none focus:ring-2 focus:ring-[#1a73e8] focus:border-[#1a73e8] transition"
+              />
+              <p className="text-[11px] text-[#5b6b7f]">
+                Enter the phone number to receive payment confirmation.
+              </p>
+            </div>
+          </div>
+
+          {isCardLoading ? (
+            <div className="flex justify-center items-center py-6">
+              <MiniLoader />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-6">
+              <button
+                className={`px-8 py-3 rounded-2xl font-semibold text-white ${
+                  cardPhoneNumber.trim().length === 0
+                    ? "bg-gray-300 cursor-not-allowed opacity-60"
+                    : "bg-[#1a73e8] hover:bg-[#155fc0]"
+                }`}
+                onClick={async () => {
+                  if (cardPhoneNumber.trim().length === 0) return;
+                  const res = await makeCardPayment(id, setIsCardLoading, cardPhoneNumber);
+                  if (res) {
+                    // Payment initiated successfully
+                  }
+                }}
+                disabled={cardPhoneNumber.trim().length === 0}
+              >
+                Proceed to Pay
+              </button>
+              <button
+                className="text-[#5b6b7f] hover:text-[#0b1520] underline text-sm"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </DisplayDialog>
+    );
   } else {
     console.log(method);
     const bankName =
@@ -623,6 +755,8 @@ const Payment: React.FC<PaymentProps> = ({
       ? "Pay with Ghana Cedis(Momo)"
       : method.channel.toLowerCase() === "bank"
       ? "Pay with Bank"
+      : method.channel.toLowerCase() === "card"
+      ? "Pay with Visa/Mastercard"
       : `Pay with ${method.channel}`;
 
   return (

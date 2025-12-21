@@ -29,6 +29,10 @@ const fetchPaymentMethods = async () => {
         },
       }
     );
+    // eslint-disable-next-line no-console
+    console.log("[PaymentMethods] Response:");
+    // eslint-disable-next-line no-console
+    console.dir(response.data, { depth: null });
     return response.data;
   } catch (error) {
     console.log(error);

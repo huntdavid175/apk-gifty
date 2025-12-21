@@ -220,8 +220,17 @@ export default function NotificationsDropdown() {
             <button
               type="button"
               className="block w-full py-2 text-center text-sm text-white bg-[#587BF2] hover:bg-[#4665D1] rounded-md transition-colors"
+              onClick={() => {
+                try {
+                  setItems([]);
+                  localStorage.removeItem("notifications");
+                  window.dispatchEvent(new CustomEvent("notifications-updated"));
+                } catch {
+                  // ignore
+                }
+              }}
             >
-              View All
+              Clear All
             </button>
           </div>
         </div>
