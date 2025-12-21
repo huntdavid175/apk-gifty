@@ -48,7 +48,7 @@ const makeMomoPayment = async (
     const response = await axios(config);
     if (response.status == 200) {
       toast.success("Payment initiated successfully");
-      console.log(response.data);
+      // console.log(response.data);
       return response.data;
     }
 
@@ -60,7 +60,7 @@ const makeMomoPayment = async (
     // }
   } catch (error: any) {
     toast.error("Payment issue, please try again later");
-    console.log(error);
+    // console.log(error);
   } finally {
     loadingFunc(false);
   }
@@ -84,16 +84,22 @@ const makeCardPayment = async (id: number, loadingFunc: any, phoneNumber: string
   try {
     loadingFunc(true);
     const response = await axios(config);
-    // eslint-disable-next-line no-console
-    console.log("[CardPayment] Response:", response.status, response.data);
-    if (response.status === 200) {
-      toast.success("Payment initiated successfully");
-      return response.data;
+    if (response.status === 200 && response.data) {
+      const { success, checkoutUrl, statusMessage } = response.data;
+      if (success && checkoutUrl) {
+        toast.success(statusMessage || "Opening payment page...");
+        window.open(checkoutUrl, "_blank");
+        return response.data;
+      } else {
+        toast.error(statusMessage || "Payment initiation failed");
+      }
     }
   } catch (error: any) {
-    // eslint-disable-next-line no-console
-    console.log("[CardPayment] Error:", error?.response?.data || error);
-    toast.error("Payment issue, please try again later");
+    const errorMessage =
+      error?.response?.data?.statusMessage ||
+      error?.response?.data?.message ||
+      "Payment issue, please try again later";
+    toast.error(errorMessage);
   } finally {
     loadingFunc(false);
   }
@@ -119,7 +125,7 @@ const makeUSDTPayment = async (id: number, loadingFunc: any) => {
       return response.data;
     }
   } catch (error: any) {
-    console.log(error);
+    // console.log(error);
   } finally {
     loadingFunc(false);
   }
@@ -160,7 +166,7 @@ const confirmMomoPayment = async (
       return response.data;
     }
   } catch (error: any) {
-    console.log(error);
+    // console.log(error);
     toast.error("Could not confirm payment. Please try again.");
   }
 };
@@ -187,6 +193,8 @@ const Payment: React.FC<PaymentProps> = ({
   const [momoPaid, setMomoPaid] = useState<boolean>(false);
   const [isCardLoading, setIsCardLoading] = useState<boolean>(false);
   const [cardPhoneNumber, setCardPhoneNumber] = useState<string>("");
+  const [cardPaymentInitiated, setCardPaymentInitiated] = useState<boolean>(false);
+  const [cardPaid, setCardPaid] = useState<boolean>(false);
 
   let dialog;
 
@@ -226,17 +234,21 @@ const Payment: React.FC<PaymentProps> = ({
         }
       }
       if (method.channel.toLowerCase() === "momo") {
-        console.log(momoPaymentMethod, momoPhoneNumber);
+        // console.log(momoPaymentMethod, momoPhoneNumber);
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
 
-  // Guard dialog close for momo after initiation until paid
+  // Guard dialog close for momo/card after initiation until paid
   const handleGuardedClose = () => {
     if (method.channel.toLowerCase() === "momo" && momoInitiated && !momoPaid) {
       toast.warn("Payment not completed yet. Please authorize on your phone.");
+      return;
+    }
+    if (method.channel.toLowerCase() === "card" && cardPaymentInitiated && !cardPaid) {
+      toast.warn("Payment not completed yet. Please complete payment in the opened tab.");
       return;
     }
     setOpen(false);
@@ -313,13 +325,40 @@ const Payment: React.FC<PaymentProps> = ({
             clearInterval(intervalId);
           }
         } catch (err) {
-          console.log(err);
+          // console.log(err);
         }
       }, 7000);
 
       return () => clearInterval(intervalId);
     }
   }, [method.channel, momoInitiated, open, momoPaid, id]);
+
+  // Poll every 7s after Card payment initiation to auto-check payment status
+  useEffect(() => {
+    if (
+      method.channel.toLowerCase() === "card" &&
+      cardPaymentInitiated &&
+      open &&
+      !cardPaid
+    ) {
+      const intervalId = setInterval(async () => {
+        try {
+          const res = await axios.get(`/api/momo-payment`, { params: { id } });
+          if (res.status === 200 && res.data?.is_paid) {
+            setCardPaid(true);
+            toast.success("Payment confirmed successfully");
+            if (notifySeller) notifySeller();
+            setOpen(false);
+            clearInterval(intervalId);
+          }
+        } catch (err) {
+          // ignore polling errors
+        }
+      }, 7000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [method.channel, cardPaymentInitiated, open, cardPaid, id]);
 
   if (method.channel.toLowerCase() === "usdt") {
     dialog = (
@@ -517,7 +556,7 @@ const Payment: React.FC<PaymentProps> = ({
         title={""}
         buttonText={""}
         open={open}
-        handleClose={() => setOpen(false)}
+        handleClose={handleGuardedClose}
         sx={{
           backgroundColor: "#f5f7fb",
           borderColor: "transparent",
@@ -582,24 +621,46 @@ const Payment: React.FC<PaymentProps> = ({
             <div className="flex items-center justify-center gap-6">
               <button
                 className={`px-8 py-3 rounded-2xl font-semibold text-white ${
-                  cardPhoneNumber.trim().length === 0
+                  cardPaymentInitiated
+                    ? "bg-green-600 hover:bg-green-700"
+                    : cardPhoneNumber.trim().length === 0
                     ? "bg-gray-300 cursor-not-allowed opacity-60"
                     : "bg-[#1a73e8] hover:bg-[#155fc0]"
                 }`}
                 onClick={async () => {
+                  if (cardPaymentInitiated) {
+                    // User confirms payment - check with API if payment is made
+                    try {
+                      setIsCardLoading(true);
+                      const res = await axios.get(`/api/momo-payment`, { params: { id } });
+                      if (res.status === 200 && res.data?.is_paid) {
+                        setCardPaid(true);
+                        toast.success("Payment confirmed successfully");
+                        notifySeller();
+                        setOpen(false);
+                      } else {
+                        toast.warn("Payment not confirmed yet. Please complete payment in the opened tab.");
+                      }
+                    } catch (e) {
+                      toast.error("Could not confirm payment. Please try again.");
+                    } finally {
+                      setIsCardLoading(false);
+                    }
+                    return;
+                  }
                   if (cardPhoneNumber.trim().length === 0) return;
                   const res = await makeCardPayment(id, setIsCardLoading, cardPhoneNumber);
-                  if (res) {
-                    // Payment initiated successfully
+                  if (res && res.success) {
+                    setCardPaymentInitiated(true);
                   }
                 }}
-                disabled={cardPhoneNumber.trim().length === 0}
+                disabled={!cardPaymentInitiated && cardPhoneNumber.trim().length === 0}
               >
-                Proceed to Pay
+                {cardPaymentInitiated ? "Confirm Payment" : "Proceed to Pay"}
               </button>
               <button
                 className="text-[#5b6b7f] hover:text-[#0b1520] underline text-sm"
-                onClick={() => setOpen(false)}
+                onClick={handleGuardedClose}
               >
                 Cancel
               </button>
@@ -609,7 +670,7 @@ const Payment: React.FC<PaymentProps> = ({
       </DisplayDialog>
     );
   } else {
-    console.log(method);
+    // console.log(method);
     const bankName =
       method?.body.split(" ")[0] + " " + method?.body.split(" ")[1];
     const accountNumber = method?.body.split(" ")[2];

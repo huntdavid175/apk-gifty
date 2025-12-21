@@ -26,7 +26,7 @@ export async function GET(req: Request, res: Response) {
     // console.log(response);
     return NextResponse.json(response.data);
   } catch (error: any) {
-    console.log(error);
+    // console.log(error);
     return new Response(JSON.stringify(error.response.data), {
       status: error.response.status,
       headers: error.response.header,
