@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import CartItem from "@/components/Cart/CartItem";
 import { useAtom } from "jotai";
 import { cartAtom, CartState } from "@/atoms/cartAtom";
-import axios from "axios";
 import { removeCartItem, updateCart, checkoutCart } from "@/utils/cartHelpers";
 import { useRouter } from "next/navigation";
 import Lottie from "lottie-react";

@@ -14,6 +14,9 @@ import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Force dynamic rendering for all dashboard pages - they require authentication
+export const dynamic = "force-dynamic";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {

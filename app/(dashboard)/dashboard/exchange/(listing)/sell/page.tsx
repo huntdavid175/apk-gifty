@@ -4,6 +4,9 @@ import Product from "@/components/Product/Product";
 import { redirect } from "next/navigation";
 import NoProducts from "@/components/Product/NoProducts";
 
+// Force dynamic rendering - this page requires authentication
+export const dynamic = "force-dynamic";
+
 const fetchProducts = async (accessToken: any, type: string) => {
   const response = await axios.get(
     `${process.env.API_ENDPOINT}/products?category=${type}`,
