@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
+const withMDX = require("@next/mdx")();
 
 const nextConfig = {
+  pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
   images: {
     remotePatterns: [
       {
@@ -31,24 +33,8 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
   },
   experimental: {
-    mdxRs: true,
     optimizePackageImports: ["framer-motion"],
   },
-  webpack: (config, { defaultLoaders }) => {
-    config.module.rules.push({
-      test: /\.mdx$/,
-      use: [
-        defaultLoaders.babel,
-        {
-          loader: "@mdx-js/loader",
-        },
-      ],
-    });
-
-    return config;
-  },
 };
-
-const withMDX = require("@next/mdx")();
 
 module.exports = withMDX(nextConfig);
