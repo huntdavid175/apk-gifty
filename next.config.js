@@ -1,39 +1,40 @@
 /** @type {import('next').NextConfig} */
+const withMDX = require("@next/mdx")();
 
 const nextConfig = {
+  pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
   images: {
-    domains: [
-      "images.unsplash.com",
-      "placehold.co",
-      "backend.apkxchange.com",
-      "plus.unsplash.com",
-      "s3-alpha-sig.figma.com",
-      "test.apkxchange.com",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "backend.apkxchange.com",
+      },
+      {
+        protocol: "https",
+        hostname: "plus.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "s3-alpha-sig.figma.com",
+      },
+      {
+        protocol: "https",
+        hostname: "test.apkxchange.com",
+      },
     ],
     dangerouslyAllowSVG: true,
   },
   experimental: {
-    serverActions: true,
-    mdxRs: true,
     optimizePackageImports: ["framer-motion"],
-  },
-  webpack: (config, { defaultLoaders }) => {
-    config.module.rules.push({
-      test: /\.mdx$/,
-      use: [
-        defaultLoaders.babel,
-        {
-          loader: "@mdx-js/loader",
-        },
-      ],
-    });
-
-    return config;
   },
 };
 
-const withMDX = require("@next/mdx");
-
 module.exports = withMDX(nextConfig);
-
-module.exports = nextConfig;

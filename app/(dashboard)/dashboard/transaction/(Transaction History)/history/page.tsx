@@ -2,8 +2,10 @@ import TableDataRow from "@/components/Table/TableDataRow";
 import TableHead from "@/components/Table/TableHead";
 import React from "react";
 
-import axios from "axios";
 import axiosInstance from "@/utils/axios";
+
+// Force dynamic rendering - this page requires authentication
+export const dynamic = "force-dynamic";
 
 const fetchOrders = async () => {
   let config = {
@@ -29,7 +31,7 @@ const fetchOrders = async () => {
 const TransactionHistory = async () => {
   const orders = await fetchOrders();
 
-  // console.log(orders);
+  const orderList = orders?.data ?? [];
 
   return (
     <div className="w-full text-whitepy-10 py-4 px-2 lg:px-12 lg:py-20">
@@ -37,7 +39,7 @@ const TransactionHistory = async () => {
         <table className="w-full text-sm text-left text-white ">
           <TableHead />
           <tbody>
-            {orders.data.map((order: any) => (
+            {orderList.map((order: any) => (
               <TableDataRow
                 key={order.id}
                 description={order.name}

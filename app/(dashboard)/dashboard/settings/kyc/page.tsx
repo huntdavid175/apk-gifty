@@ -10,11 +10,14 @@ import EmailAtSvg from "@/components/UI/SvgIcons/EmailAtSvg";
 import Link from "next/link";
 import axiosInstance from "@/utils/axios";
 
+// Force dynamic rendering - this page requires authentication
+export const dynamic = "force-dynamic";
+
 const KYCPage = async () => {
   // const cookieStore = cookies();
   // const accessToken = cookieStore.get("access")?.value;
 
-  let user;
+  let user: any = null;
 
   try {
     const res = await axiosInstance.get(`${process.env.API_ENDPOINT}/profile`, {
@@ -22,10 +25,9 @@ const KYCPage = async () => {
         //   Authorization: `Bearer ${accessToken}`,
       },
     });
-    // console.log(res.data);
-    user = res.data.data;
+    user = res.data?.data;
   } catch (error) {
-    console.log(error);
+    // ignore fetch errors
   }
 
   return (
@@ -44,7 +46,7 @@ const KYCPage = async () => {
               placeholder="First Name"
               name="firstname"
               className="bg-primary"
-              defaultValue={user.firstname}
+              defaultValue={user?.firstname ?? ""}
               readOnly
             />
           </div>
@@ -65,7 +67,7 @@ const KYCPage = async () => {
               placeholder="Display Name"
               name="displayname"
               className="bg-primary"
-              defaultValue={user.firstname}
+              defaultValue={user?.firstname ?? ""}
               readOnly
             />
           </div>{" "}
@@ -76,7 +78,7 @@ const KYCPage = async () => {
               placeholder="User Name"
               name="username"
               className="bg-primary"
-              defaultValue={user.firstname}
+              defaultValue={user?.firstname ?? ""}
               readOnly
             />
           </div>
@@ -84,7 +86,7 @@ const KYCPage = async () => {
       </div>
 
       {/* <KYC status={user?.kyc?.status} /> */}
-      {!user.kyc && (
+      {user && !user.kyc && (
         <div className="w-full flex justify-center mt-12">
           <Link href="/kyc">
             <button className="bg-appviolet text-white px-12 py-2 lg:px-16 lg:py-3 text-xs lg:text-sm rounded-lg hover:bg-[#597cf3]">

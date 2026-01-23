@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import Product from "@/components/Product/Product";
 import NoProducts from "@/components/Product/NoProducts";
 import BuyProductCard from "@/components/Product/BuyProductCard";
+
+// Force dynamic rendering - this page requires authentication
+export const dynamic = "force-dynamic";
 // const products = [
 //   {
 //     title: "Amazon Gift Card",

@@ -14,6 +14,8 @@ interface Props {
   open: boolean;
   handleClose: () => void;
   sx?: any;
+  paperSx?: any;
+  maxWidthProp?: "xs" | "sm" | "md" | "lg" | "xl" | false;
 }
 
 const DisplayDialog: React.FC<Props> = ({
@@ -23,6 +25,8 @@ const DisplayDialog: React.FC<Props> = ({
   children,
   buttonText,
   sx,
+  paperSx,
+  maxWidthProp,
 }) => {
   return (
     <Dialog
@@ -30,6 +34,9 @@ const DisplayDialog: React.FC<Props> = ({
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      fullWidth
+      maxWidth={maxWidthProp ?? "xs"}
+      PaperProps={{ sx: { width: 420, ...paperSx } }}
     >
       <DialogTitle id="alert-dialog-title" sx={sx}>
         {title}
@@ -39,12 +46,13 @@ const DisplayDialog: React.FC<Props> = ({
           {children}
         </DialogContentText>
       </DialogContent>
-      <DialogActions sx={sx}>
-        {/* <Button onClick={handleClose}>Disagree</Button> */}
-        <Button onClick={handleClose} autoFocus>
-          {buttonText}
-        </Button>
-      </DialogActions>
+      {buttonText && (
+        <DialogActions sx={sx}>
+          <Button onClick={handleClose} autoFocus>
+            {buttonText}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

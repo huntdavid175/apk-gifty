@@ -29,9 +29,11 @@ const fetchPaymentMethods = async () => {
         },
       }
     );
+    // console.log("[PaymentMethods] Response:");
+    // console.dir(response.data, { depth: null });
     return response.data;
   } catch (error) {
-    console.log(error);
+    // console.log(error);
   }
 };
 
